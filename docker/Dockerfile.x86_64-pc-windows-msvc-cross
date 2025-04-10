@@ -72,7 +72,12 @@ ENV CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER=lld-link \
                                 -I/opt/msvc/kits/10/include/10.0.22621.0/um \
                                 -I/opt/msvc/kits/10/include/10.0.22621.0/winrt \
                                 -I/opt/msvc/kits/10/include/10.0.22621.0/km" \
-    RUSTFLAGS="-Lnative=/opt/msvc/vc/tools/msvc/14.43.34808/atlmfc/lib/x64 -Lnative=/opt/msvc/vc/tools/msvc/14.43.34808/lib/x64 -Lnative=/opt/msvc/kits/10/lib/10.0.22621.0/ucrt/x64 -Lnative=/opt/msvc/kits/10/lib/10.0.22621.0/um/x64 -Lnative=/opt/msvc/kits/10/lib/10.0.22621.0/km/x64" \
+    RUSTFLAGS="-Lnative=/opt/msvc/vc/tools/msvc/14.43.34808/atlmfc/lib/x64 \
+               -Lnative=/opt/msvc/vc/tools/msvc/14.43.34808/lib/x64 \
+               -Lnative=/opt/msvc/kits/10/lib/10.0.22621.0/ucrt/x64 \
+               -Lnative=/opt/msvc/kits/10/lib/10.0.22621.0/um/x64 \
+               -Lnative=/opt/msvc/kits/10/lib/10.0.22621.0/km/x64" \
     VSINSTALLDIR="/opt/msvc" \
     VCINSTALLDIR="/opt/msvc/vc" \
+    PATH=$CROSS_SYSROOT/bin/Hostx64/x64:$PATH \
     VSCMD_ARG_TGT_ARCH=$ARCH
