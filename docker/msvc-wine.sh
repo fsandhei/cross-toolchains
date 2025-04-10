@@ -7,14 +7,12 @@ set -euo pipefail
 . lib.sh
 
 main() {
-    local commit=34d9736591b691c6bdaab8e6036e1f5b47f956f5
+    local commit=44dc13b5e62ecc2373fbe7e4727a525001f403f4
 
     install_packages python3 \
         python3-pip \
         msitools \
-        python3-simplejson \
-        ca-certificates \
-        winbind
+        ca-certificates
 
     # python3-six takes forever
     python3 -m pip install six
@@ -30,7 +28,9 @@ main() {
     python3 vsdownload.py --accept-license --dest /opt/msvc
     ./install.sh /opt/msvc
 
-    python3 -m pip uninstall six --yes
+    BIN=/opt/msvc/bin/x64 . ./msvcenv-native.sh
+
+    # python3 -m pip uninstall six --yes
     purge_packages
 
     popd

@@ -14,6 +14,6 @@ fi
 export WINEPREFIX=/tmp/wine
 mkdir -p "${WINEPREFIX}"
 # FIXME: Make the wine prefix initialization faster
-wineboot &> /dev/null
+wine wineboot &> /dev/null
 
 exec "$@"
