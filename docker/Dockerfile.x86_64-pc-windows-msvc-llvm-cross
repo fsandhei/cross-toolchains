@@ -1,0 +1,61 @@
+# Dockerfile that sets up the development environment for cross-compiling
+# for Windows on Linux using the Clang compiler along with the MSVC system headers
+# and libraries.
+
+# We'll just use the official Rust image rather than build our own from scratch
+FROM docker.io/library/rust:1.86.0-slim-bullseye
+
+# We don't want apt be asking us questions.
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Setup LLVM and clang for MSVC
+COPY cross-toolchains/docker/clang-llvm.sh /
+RUN /clang-llvm.sh
+
+ARG ARCH="x86_64"
+ARG SDK_VERSION="10.0.26100"
+
+# Setup xwin and fetch Windows 10 SDK
+COPY cross-toolchains/docker/xwin.sh /
+RUN /xwin.sh --arch "$ARCH" --sdk-version "$SDK_VERSION"
+
+# Retrieve the std lib for triplet x86_64-pc-windows-msvc
+RUN rustup target add x86_64-pc-windows-msvc
+
+# Setup the Rust environment for using clang instead of the standard MSVC toolchain.
+# Note that we're using the full target triple for each variable instead of the
+# simple CC/CXX/AR shorthands to avoid issues when compiling any C/C++ code for
+# build dependencies that need to compile and execute in the host environment
+ENV CC_x86_64_pc_windows_msvc="clang-cl"
+ENV CXX_x86_64_pc_windows_msvc="clang-cl"
+ENV AR_x86_64_pc_windows_msvc="llvm-lib"
+
+# Note that we only disable unused-command-line-argument here since clang-cl
+# doesn't implement all of the options supported by cl, but the ones it doesn't
+# are _generally_ not interesting.
+ENV CL_FLAGS_x86_64_pc_windows_msvc="-Wno-unused-command-line-argument \
+                                     -fuse-ld=lld-link \
+                                     /imsvc/xwin/crt/include \
+                                     /imsvc/xwin/sdk/include/ucrt \
+                                     /imsvc/xwin/sdk/include/um \
+                                     /imsvc/xwin/sdk/include/shared"
+
+ENV CFLAGS_x86_64_pc_windows_msvc="$CL_FLAGS_x86_64_pc_windows_msvc"
+ENV CXXFLAGS_x86_64_pc_windows_msvc="$CL_FLAGS_x86_64_pc_windows_msvc"
+
+# Bindgen needs to know where the standard headers for MSVC are located.
+# NOTE: bindgen uses libclang and seems to be hardcoded to use clang.
+# We therefore make clang use the clang-cl driver by forcing it with
+# passing --driver-mode=cl
+ENV BINDGEN_EXTRA_CLANG_ARGS_x86_64_pc_windows_msvc="--driver-mode=cl \
+                                                     /imsvc/xwin/crt/include \
+                                                     /imsvc/xwin/sdk/include/ucrt \
+                                                     /imsvc/xwin/sdk/include/um \
+                                                     /imsvc/xwin/sdk/include/shared"
+# Let cargo know what linker to invoke.
+ENV CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER="lld-link"
+ENV RUSTFLAGS="-Lnative=/xwin/crt/lib/$ARCH \
+               -Lnative=/xwin/sdk/lib/um/$ARCH \
+               -Lnative=/xwin/sdk/lib/ucrt/$ARCH"
+
+
